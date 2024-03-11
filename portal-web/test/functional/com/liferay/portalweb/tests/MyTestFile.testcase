@@ -1,0 +1,69 @@
+@component-name = "portal-web-forms-and-data-lists"
+definition {
+
+	property testray.main.component.name = "Forms";
+
+	setUp {
+		task ("Open New Instance Of Liferay") {
+			TestCase.setUpPortalInstance();
+		}
+
+		task ("Login") {
+			User.firstLoginPG();
+		}
+
+		task ("Navigate To The Instance") {
+			Navigator.openURL();
+		}
+	}
+
+	tearDown {
+		User.logoutAndLoginPG(
+			userLoginEmailAddress = "test@liferay.com",
+			userLoginFullName = "Test Test");
+	}
+
+	@description = "Set Screen Size To Custom And Validate Values"
+	@priority = 5
+	test SetScreenSizeAndValidateValues {
+		task ("Given Go To Simulation") {
+			MyTests.selectCustomOption();
+		}
+
+		task ("When Modify The Width And The Height") {
+			var height = 1922;
+			var width = 1088;
+
+			MyTests.modifyHeightAndWidthAndApplyCustomSize(
+				height = ${height},
+				width = ${width});
+
+			Click(locator1 = "myTests#CLOSE_SUMULATION");
+		}
+
+		task ("Then Confirm The Custom Size Is Applied") {
+			MyTests.selectCustomOption();
+
+			AssertTextEquals(
+				locator1 = "myTests#ALERT",
+				value1 = "Custom Size ${height}x${width} Applied");
+		}
+	}
+
+	@description = "Access Portal Global Menu And Validate Configuration String At Control Panel"
+	@priority = 5
+	test ValidateConfigurationStringAtControlPanel {
+		task ("Given Go To Menu") {
+			ApplicationsMenuHelper.openApplicationsMenu();
+		}
+
+		task ("When Switch To Control Panel") {
+			ApplicationsMenu.gotoPanel(panel = "Control Panel");
+		}
+
+		task ("Then Validate The Configuration Is Displayed") {
+			AssertElementPresent(locator1 = "myTests#CONFIGURATION");
+		}
+	}
+
+}
