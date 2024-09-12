@@ -17,6 +17,7 @@ import ClayNavigationBar from '@clayui/navigation-bar';
 import ClayTable from '@clayui/table';
 import classNames from 'classnames';
 import {
+	createPortletURL,
 	fetch,
 	navigate as navigateUtil,
 	openConfirmModal,
@@ -137,7 +138,6 @@ export default function ChangeTrackingRenderView({
 	handleShowHideable,
 	initialDataURL,
 	moveChangesURL,
-	namespace,
 	parentEntries,
 	showDropdown,
 	showHeader = true,
@@ -1484,27 +1484,11 @@ export default function ChangeTrackingRenderView({
 
 	const updatePreviewRender = (segmentsExperienceId) => {
 		if (segmentsExperienceId) {
-			let newDataURL;
+			const newDataURL = createPortletURL(initialDataURL, {
+				segmentsExperienceId,
+			});
 
-			if (initialDataURL.includes('segmentsExperienceId=')) {
-				const regex = /segmentsExperienceId=\d*/i;
-
-				newDataURL = initialDataURL.replace(
-					regex,
-					'segmentsExperienceId=' +
-						encodeURIComponent(segmentsExperienceId)
-				);
-			}
-			else {
-				newDataURL =
-					initialDataURL +
-					'&' +
-					namespace +
-					'segmentsExperienceId=' +
-					encodeURIComponent(segmentsExperienceId);
-			}
-
-			setDataURL(newDataURL);
+			setDataURL(newDataURL.toString());
 			setSelectedSegmentsExperienceId(segmentsExperienceId);
 		}
 		else {

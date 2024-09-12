@@ -2968,8 +2968,8 @@ definition {
 		}
 
 		Type(
-			key_fieldLabel = "File Max Size",
-			locator1 = "TextInput#GENERIC_TEXT_INPUT",
+			key_text = "Maximum File Upload Size",
+			locator1 = "TextInput#ANY",
 			value1 = ${fieldValue});
 
 		SystemSettings.saveConfiguration();
@@ -3004,9 +3004,9 @@ definition {
 
 		if (isSet(checkPortletTitle)) {
 			AssertTextEquals(
-				key_portletTitle = "File Upload Limits",
+				key_portletTitle = "File Size Limits",
 				locator1 = "DocumentsAndMedia#PORTLET_TITLE",
-				value1 = "File Upload Limits");
+				value1 = "File Size Limits");
 		}
 
 		if (${indexNumber} == 2) {

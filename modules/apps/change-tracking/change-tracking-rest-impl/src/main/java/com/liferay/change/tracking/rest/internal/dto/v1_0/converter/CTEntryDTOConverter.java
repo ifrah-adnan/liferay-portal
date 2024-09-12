@@ -14,7 +14,6 @@ import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.model.BaseModel;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.GroupedModel;
-import com.liferay.portal.kernel.model.WorkflowedModel;
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.vulcan.dto.converter.DTOConverter;
@@ -53,27 +52,6 @@ public class CTEntryDTOConverter
 		}
 
 		return _toCTEntry(dtoConverterContext, ctEntry);
-	}
-
-	private String _getChangeTypeLabel(
-		Locale locale, com.liferay.change.tracking.model.CTEntry ctEntry,
-		BaseModel<?> model) {
-
-		if (model instanceof WorkflowedModel) {
-			WorkflowedModel workflowedModel = (WorkflowedModel)model;
-
-			if (workflowedModel.getStatus() ==
-					WorkflowConstants.STATUS_IN_TRASH) {
-
-				return _language.get(locale, "deleted");
-			}
-		}
-
-		if (ctEntry.getChangeType() == CTConstants.CT_CHANGE_TYPE_ADDITION) {
-			return _language.get(locale, "added");
-		}
-
-		return _language.get(locale, "modified");
 	}
 
 	private Long _getSiteId(BaseModel<?> model) {
@@ -124,8 +102,11 @@ public class CTEntryDTOConverter
 		return new CTEntry() {
 			{
 				actions = dtoConverterContext.getActions();
-				changeType = _getChangeTypeLabel(
-					dtoConverterContext.getLocale(), ctEntry, model);
+				changeType = _language.get(
+					dtoConverterContext.getLocale(),
+					CTConstants.getCTChangeTypeLabel(
+						_ctDisplayRendererRegistry.getChangeType(
+							ctEntry, model)));
 				ctCollectionId = ctEntry.getCtCollectionId();
 				dateCreated = ctEntry.getCreateDate();
 				dateModified = ctEntry.getModifiedDate();

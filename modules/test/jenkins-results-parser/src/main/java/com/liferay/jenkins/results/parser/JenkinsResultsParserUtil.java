@@ -169,6 +169,10 @@ public class JenkinsResultsParserUtil {
 			_initializeRedactTokens();
 		}
 
+		if (_forbiddenRedactTokens.contains(token)) {
+			return;
+		}
+
 		_redactTokens.add(token);
 	}
 
@@ -1400,7 +1404,7 @@ public class JenkinsResultsParserUtil {
 	public static Properties getBuildProperties(boolean checkCache)
 		throws IOException {
 
-		Properties properties = new Properties();
+		Properties properties = new SecureProperties();
 
 		synchronized (_buildProperties) {
 			if (checkCache && !_buildProperties.isEmpty()) {
@@ -3302,7 +3306,22 @@ public class JenkinsResultsParserUtil {
 		StringBuilder sb = new StringBuilder();
 
 		sb.append("import org.jvnet.jenkins.plugins.nodelabelparameter.");
+		sb.append("LabelParameterDefinition;\n");
+
+		sb.append("import org.jvnet.jenkins.plugins.nodelabelparameter.");
 		sb.append("LabelParameterValue;\n");
+
+		sb.append("Map<String, String> parameters = new HashMap<>();\n");
+
+		for (Map.Entry<String, String> buildParameter :
+				buildParameters.entrySet()) {
+
+			sb.append("parameters.put(\"");
+			sb.append(buildParameter.getKey());
+			sb.append("\", \"");
+			sb.append(buildParameter.getValue());
+			sb.append("\");\n");
+		}
 
 		sb.append("Map<String, TopLevelItem> topLevelItems = ");
 		sb.append("Jenkins.instance.getItemMap();\n");
@@ -3314,26 +3333,39 @@ public class JenkinsResultsParserUtil {
 		sb.append(
 			"List<ParameterValue> parameterValues = new ArrayList<>();\n");
 
-		for (Map.Entry<String, String> buildParameter :
-				buildParameters.entrySet()) {
+		sb.append("JobProperty jobProperty = topLevelItem.getProperty(");
+		sb.append("\"hudson.model.ParametersDefinitionProperty\");\n");
 
-			sb.append("parameterValues.add(");
+		sb.append("for (ParameterDefinition parameterDefinition : ");
+		sb.append("jobProperty.getParameterDefinitions()) {\n");
 
-			String buildParamaterName = buildParameter.getKey();
+		sb.append("String parameterName = parameterDefinition.getName();\n;");
 
-			if (buildParamaterName.equals("SLAVE_LABEL")) {
-				sb.append("new LabelParameterValue");
-			}
-			else {
-				sb.append("new StringParameterValue");
-			}
+		sb.append("String parameterValue = parameters.get(parameterName);\n;");
 
-			sb.append("(\"");
-			sb.append(buildParameter.getKey());
-			sb.append("\", \"");
-			sb.append(buildParameter.getValue());
-			sb.append("\"));\n");
-		}
+		sb.append(
+			"if ((parameterValue == null) || parameterValue.isEmpty()) {\n;");
+		sb.append("parameterValue = parameterDefinition.defaultValue;\n");
+		sb.append("}\n");
+
+		sb.append("if (parameterDefinition instanceof ");
+		sb.append("StringParameterDefinition) {\n");
+
+		sb.append("parameterValues.add(");
+		sb.append(
+			"new StringParameterValue(parameterName, parameterValue));\n");
+
+		sb.append("}\n");
+
+		sb.append("else if (parameterDefinition instanceof ");
+		sb.append("LabelParameterDefinition) {\n");
+
+		sb.append("parameterValues.add(");
+		sb.append("new LabelParameterValue(parameterName, parameterValue));\n");
+
+		sb.append("}\n");
+
+		sb.append("}\n");
 
 		sb.append("def waitingItem = Jenkins.instance.queue.schedule(");
 		sb.append("topLevelItem, 0, new ParametersAction(parameterValues));\n");
@@ -6297,6 +6329,8 @@ public class JenkinsResultsParserUtil {
 	private static Long _currentTimeMillisDelta;
 	private static final Pattern _dockerFilePattern = Pattern.compile(
 		".*FROM (?<dockerImageName>[^\\s]+)( AS builder)?\\n[\\s\\S]*");
+	private static final List<String> _forbiddenRedactTokens = Arrays.asList(
+		"test");
 	private static JSONArray _gitDirectoriesJSONArray;
 	private static final DateFormat _gitHubDateFormat = new SimpleDateFormat(
 		"yyyy-MM-dd'T'HH:mm:ss");

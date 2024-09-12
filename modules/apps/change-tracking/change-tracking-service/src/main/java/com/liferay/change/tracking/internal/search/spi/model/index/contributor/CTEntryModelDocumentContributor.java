@@ -55,7 +55,6 @@ public class CTEntryModelDocumentContributor
 			document.addText(Field.USER_NAME, user.getFullName());
 		}
 
-		document.addKeyword("changeType", ctEntry.getChangeType());
 		document.addKeyword("ctCollectionId", ctEntry.getCtCollectionId());
 		document.addKeyword("modelClassNameId", ctEntry.getModelClassNameId());
 		document.addKeyword("modelClassPK", ctEntry.getModelClassPK());
@@ -81,19 +80,12 @@ public class CTEntryModelDocumentContributor
 		return locales.toArray(new Locale[0]);
 	}
 
-	private Map<Locale, String> _getChangeTypeLabeleMap(
-		Locale[] locales, long changeType) {
+	private Map<Locale, String> _getChangeTypeLabelMap(
+		Locale[] locales, int changeType) {
 
 		Map<Locale, String> map = new HashMap<>();
 
-		String changeTypeLabel = "modified";
-
-		if (changeType == CTConstants.CT_CHANGE_TYPE_ADDITION) {
-			changeTypeLabel = "added";
-		}
-		else if (changeType == CTConstants.CT_CHANGE_TYPE_DELETION) {
-			changeTypeLabel = "deleted";
-		}
+		String changeTypeLabel = CTConstants.getCTChangeTypeLabel(changeType);
 
 		for (Locale locale : locales) {
 			map.put(locale, _language.get(locale, changeTypeLabel));
@@ -145,18 +137,23 @@ public class CTEntryModelDocumentContributor
 			ctCollectionId, CTSQLModeThreadLocal.CTSQLMode.DEFAULT,
 			ctEntry.getModelClassNameId(), ctEntry.getModelClassPK());
 
+		int changeType = _ctDisplayRendererRegistry.getChangeType(
+			ctEntry, model);
+
+		document.addKeyword("changeType", changeType);
+
 		Locale[] locales = _getAvailableLocales(
 			model,
 			_ctDisplayRendererRegistry.getCTDisplayRenderer(
 				ctEntry.getModelClassNameId()));
 
 		document.addLocalizedText(
-			"typeName", _getTypeNameMap(locales, ctEntry.getModelClassNameId()),
+			"changeTypeLabel", _getChangeTypeLabelMap(locales, changeType),
 			true);
 
 		document.addLocalizedText(
-			"changeTypeLabel",
-			_getChangeTypeLabeleMap(locales, ctEntry.getChangeType()), true);
+			"typeName", _getTypeNameMap(locales, ctEntry.getModelClassNameId()),
+			true);
 
 		if (model == null) {
 			return;
